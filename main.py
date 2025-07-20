@@ -29,5 +29,13 @@ else:
     plot_cmd(parsed_data)
 
 # --- Rerun-Flag Clearance (optional post-processing) ---
-if st.session_state.get("retry_search"):
-    st.session_state.retry_search = False
+if st.session_state.get("empty_result"):
+    st.warning("🚫 No results found. Adjust your query and try again.")
+    
+    if st.button("🔄 Retry Search"):
+        st.session_state.retry_search = True
+        try:
+            st.experimental_rerun()
+        except Exception:
+            st.error("Rerun failed. Please refresh manually.")
+
