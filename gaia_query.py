@@ -1,15 +1,26 @@
-import pandas as pd
+import requests
 
-def query_gaia(ra, dec, radius):
-    # Replace this with actual Gaia query logic
-    return pd.DataFrame()  # Stub: returns empty for testing
+def query_gaia_data(ra, dec, radius):
+    base_url = "https://gea.esac.esa.int/tap-server/tap"
+    query = f"""
+        SELECT TOP 5000 *
+        FROM gaiadr3.gaia_source
+        WHERE CONTAINS(
+            POINT('ICRS', gaia_source.ra, gaia_source.dec),
+            CIRCLE('ICRS', {ra}, {dec}, {radius})
+        ) = 1
+    """
+    payload = {
+        "request": "doQuery",
+        "lang": "ADQL",
+        "format": "csv",
+        "query": query
+    }
 
-def fetch_star_data(ra, dec, radius, auto_expand=True, retries=3, buffer_step=0.3):
-    if not auto_expand:
-        return query_gaia(ra, dec, radius), radius
-    for _ in range(retries):
-        stars = query_gaia(ra, dec, radius)
-        if not stars.empty:
-            return stars, radius
-        radius += buffer_step
-    return pd.DataFrame(), radius
+    try:
+        response = requests.get(base_url, params=payload)
+        response.raise_for_status()
+        return response.content
+    except Exception as e:
+        print("Query failed:", e)
+        return None
